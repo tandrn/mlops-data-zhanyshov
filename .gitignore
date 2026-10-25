@@ -1,0 +1,10 @@
+/data/
+/.dvc/cache/
+/.dvc/tmp/
+/.venv/
+/__pycache__/
+*.pyc
+clearml.conf
+clearml_downloads/
+*.log
+clearml_ids.json
