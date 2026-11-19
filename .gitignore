@@ -8,3 +8,9 @@ clearml.conf
 clearml_downloads/
 *.log
 clearml_ids.json
+
+# Local MLflow state and generated artifacts
+mlflow.db*
+mlruns/
+mlartifacts/
+experiment-reports/

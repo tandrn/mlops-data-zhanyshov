@@ -119,3 +119,51 @@ Git переключит метаданные, но CSV могут остать�
 **7. В каком сценарии этой работы удобнее DVC, а в каком ClearML Dataset?**
 
 DVC удобнее для работы через Git: сделал ветку, изменил данные, сохранил коммит и потом объединил изменения. ClearML удобнее, когда надо посмотреть версии датасета, кто от кого наследуется, и скачать нужную версию по ID.
+
+## Эксперименты
+
+Окружение: Python 3.12.10, MLflow 3.5.1, ClearML 2.0.2, scikit-learn 1.7.2.
+
+Wine Dataset ID: `375034975eb04f47820f912de0914b5d`. SHA-256: `38860ba04ace4d402242340bcf40be4bd6f4ebde9144a3dc89dc12c20f7f8e60`. Датасет скачан по ID через ClearML SDK. SHA-256 совпал с опубликованным в разделе версий.
+
+Разбиение 60/20/20, **106/36/36** строк. Стратификация по `target`, seed 42. Состав выборок записан в `split.json` и приложен к каждому run. Test использован для оценки только выбранной модели.
+
+Tracking URI: `sqlite:///mlflow.db`. Experiment ID: `1`. Веб-интерфейс: `http://127.0.0.1:5000` при запуске UI из README.
+
+| Run ID | Модель | Параметры | Validation F1 weighted | Обучение, с |
+|---|---|---|---:|---:|
+| `f0abe55ecbba49baabaccde626e8d08e` | Random Forest | trees=150, max_depth=None | 1.0000 | 0.0546 |
+| `29dc041cda1f467dbe911a5b29851e31` | Random Forest | trees=25, max_depth=2 | 0.9448 | 0.0103 |
+| `02abdeb0e7e84cbdabf436718884a947` | Random Forest | trees=75, max_depth=4 | 0.9448 | 0.0278 |
+| `b4f744aebce3478f8a7ee7a2a36926d5` | Logistic Regression | C=0.1, solver=lbfgs, max_iter=2000 | 0.9435 | 0.0024 |
+| `912ce82adc724000bf4cdd34a5494082` | Logistic Regression | C=1.0, solver=lbfgs, max_iter=2000 | 0.9435 | 0.0025 |
+| `b1980e1e1c7b4aa8a29c4936f43eda4e` | Logistic Regression | C=0.01, solver=lbfgs, max_iter=2000 | 0.9158 | 0.0063 |
+
+Победил Random Forest со 150 деревьями по максимальному validation F1. Run ID: `f0abe55ecbba49baabaccde626e8d08e`. После загрузки модели по `runs:/f0abe55ecbba49baabaccde626e8d08e/model` предсказания совпали. У модели есть signature. Результат сохранён в `verification.json`.
+
+| Метрика на test | Значение |
+|---|---:|
+| accuracy | 0.9444 |
+| precision_weighted | 0.9491 |
+| recall_weighted | 0.9444 |
+| f1_weighted | 0.9435 |
+
+### ClearML
+
+- Проект: `MIIT/MLOps/practice_4/zhanyshov`.
+- ClearML Task ID: [`f6646fd42459474db7a0f1dfa3bee9de`](https://app.clear.ml/projects/2d1169bce4a34dd9b242c45d0f7c4808/experiments/f6646fd42459474db7a0f1dfa3bee9de/output/log).
+- ClearML Model ID: [`a03ea30c17934bfbb50cb3a4a933139d`](https://app.clear.ml/projects/2d1169bce4a34dd9b242c45d0f7c4808/models/a03ea30c17934bfbb50cb3a4a933139d/output).
+- Статус модели: **Published**. SHA-256 файла модели: `fc7a4b72042bea2566fee3fad39858444276c713cb73d2ea1588592d23f869fe`.
+- В Task проверено наличие `verification.json`, `comparison.csv` и `wine-model.joblib`.
+- Модель скачана из ClearML. SHA-256 совпал с локальным артефактом.
+  Метаданные модели содержат итоговый MLflow run ID и ClearML Dataset ID.
+
+Команда запуска в чистом окружении есть в [README.md](README.md).
+Доступ по отдельной ссылке для преподавателя не создавался.
+
+Повторный локальный прогон создал шесть новых runs в том же experiment ID
+`1`. Файл состава выборок совпал побайтно. Test F1 снова составил 0,9435.
+
+Дополнительная локальная проверка подтвердила наличие параметров, метрик,
+тегов датасета и signature у всех шести запусков. Выбранный run
+`85309f804d954e2897faacf32f1beb71` воспроизвёл test F1 0,9435.
